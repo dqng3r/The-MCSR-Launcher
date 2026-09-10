@@ -15,6 +15,8 @@ const sessionPath = path.join(app.getPath('userData'), 'session.json');
 const settingsPath = path.join(app.getPath('userData'), 'settings.json');
 const ninjabrainBotPath = path.join(app.getPath('userData'), 'ninjabrainbot', 'Ninjabrain-Bot-1.5.2.jar');
 const ninjabrainBotUrl = 'https://github.com/Ninjabrain1/Ninjabrain-Bot/releases/download/1.5.2/Ninjabrain-Bot-1.5.2.jar';
+const jinglePath = path.join(app.getPath('userData'), 'jingle', 'Jingle-1.3.0.jar');
+const jingleUrl = 'https://github.com/DuncanRuns/Jingle/releases/download/v1.3.0/Jingle-1.3.0.jar';
 const minecraftVersion = '1.16.1';
 const practiceRootName = '.mcsr-practice';
 const rsgRootName = '.mcsr';
@@ -150,7 +152,7 @@ ipcMain.handle('get-settings', async () => {
   } catch (error) {
     console.error('Failed to read settings', error);
   }
-  return { theme: 'dark', enabledMods: speedrunningMods.map(mod => mod.mod_id), recommendedSettings: false, godSensitivity: false, autoOpenNinjabrainBot: false };
+  return { theme: 'dark', enabledMods: speedrunningMods.map(mod => mod.mod_id), recommendedSettings: false, godSensitivity: false, autoOpenNinjabrainBot: false, autoOpenJingle: false };
 });
 
 ipcMain.handle('get-mods', async () => speedrunningMods.map(({ name, mod_id }) => ({ name, mod_id })));
@@ -192,7 +194,8 @@ ipcMain.handle('save-settings', async (event, settings) => {
       enabledMods,
       recommendedSettings: settings?.recommendedSettings === true,
       godSensitivity: settings?.godSensitivity === true,
-      autoOpenNinjabrainBot: settings?.autoOpenNinjabrainBot === true
+      autoOpenNinjabrainBot: settings?.autoOpenNinjabrainBot === true,
+      autoOpenJingle: settings?.autoOpenJingle === true
     };
     fs.writeFileSync(settingsPath, JSON.stringify(safeSettings, null, 2));
     return safeSettings;
@@ -466,6 +469,13 @@ ipcMain.handle('launch-mc', async (event, options) => {
       sendLog('Opening Ninjabrain Bot...');
       const botProcess = spawn('java', ['-jar', ninjabrainBotPath], { detached: true, stdio: 'ignore' });
       botProcess.unref();
+    }
+    if (options?.autoOpenJingle) {
+      fs.mkdirSync(path.dirname(jinglePath), { recursive: true });
+      await ensureFile(jingleUrl, jinglePath);
+      sendLog('Opening Jingle for game window controls...');
+      const jingleProcess = spawn('java', ['-jar', jinglePath], { detached: true, stdio: 'ignore' });
+      jingleProcess.unref();
     }
     return { success: true };
   } catch (err) {

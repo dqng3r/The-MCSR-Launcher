@@ -16,6 +16,7 @@
     .nav { display: flex; align-items: center; justify-content: space-between; padding: 24px 0; }
     .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; font-weight: 800; letter-spacing: .12em; font-size: .82rem; }
     .brand-logo { width: 38px; height: 38px; object-fit: contain; }
+    .nav-links { display: flex; gap: 22px; align-items: center; }
     .nav-link { color: var(--muted); text-decoration: none; font-size: .9rem; }
     .nav-link:hover { color: var(--bright-green); }
     .hero { display: grid; grid-template-columns: 1.1fr .9fr; gap: 72px; align-items: center; min-height: 570px; padding: 72px 0 100px; }
@@ -37,6 +38,15 @@
     .feature { padding: 22px; border-top: 2px solid var(--green); background: rgba(22, 38, 27, .55); }
     .feature:nth-child(2) { border-color: var(--brown); } .feature:nth-child(3) { border-color: var(--bright-green); }
     .feature h2 { margin: 0 0 8px; font-size: 1rem; } .feature p { margin: 0; color: var(--muted); font-size: .9rem; }
+    .privacy { width: min(1080px, calc(100% - 40px)); margin: 0 auto 90px; padding: 30px; border: 1px solid var(--line); border-radius: 12px; background: rgba(22, 38, 27, .5); }
+    .privacy-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+    .privacy h2 { margin: 0; font-size: 1.4rem; }
+    .privacy-intro { max-width: 560px; margin: 8px 0 0; color: var(--muted); font-size: .9rem; }
+    .privacy-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .privacy-item { padding-top: 16px; border-top: 2px solid var(--green); }
+    .privacy-item:nth-child(2) { border-color: var(--brown); } .privacy-item:nth-child(3) { border-color: var(--bright-green); }
+    .privacy-item h3 { margin: 0 0 7px; font-size: .92rem; } .privacy-item p { margin: 0; color: var(--muted); font-size: .82rem; line-height: 1.55; }
+    .privacy-link { color: var(--bright-green); }
     .footer { display: flex; justify-content: space-between; padding: 20px 0 28px; border-top: 1px solid var(--line); color: #718676; font-size: .78rem; }
     @media (max-width: 760px) { .hero { grid-template-columns: 1fr; gap: 42px; padding-top: 42px; } .preview { min-height: 250px; } .features { grid-template-columns: 1fr; } h1 { font-size: clamp(3rem, 16vw, 5rem); } }
     @media (max-width: 480px) { .nav, .hero, .features, .footer { width: min(100% - 28px, 1080px); } .nav-link { display: none; } .preview-mark { height: 260px; } .footer { display: block; } }
@@ -46,13 +56,13 @@
   <main class="page">
     <nav class="nav" aria-label="Main navigation">
       <a class="brand" href="/"><img class="brand-logo" src="logo.svg" alt="MCSR Launcher"><span>MCSR LAUNCHER</span></a>
-      <a class="nav-link" href="#features">What is included</a>
+      <div class="nav-links"><a class="nav-link" href="#features">What is included</a><a class="nav-link" href="#privacy">Privacy</a></div>
     </nav>
     <section class="hero">
       <div>
         <div class="eyebrow">Minecraft 1.16.1 speedrunning</div>
         <h1>Run faster.<br><em>Reset smarter.</em></h1>
-        <p class="lead">A focused launcher for RSG and Practice. Built-in speedrunning mods, recommended settings, a practice map, ToolScreen, NinjaBrainBot, and Microsoft account support.</p>
+        <p class="lead">A focused launcher for RSG and Practice. Built-in speedrunning mods, recommended settings, a practice map, Jingle window controls, NinjaBrainBot, and Microsoft account support.</p>
         <div class="actions">
           <a class="button button-primary" href="/download">Download for Windows</a>
           <a class="button button-secondary" href="#features">See what is included</a>
@@ -67,7 +77,18 @@
     <section class="features" id="features">
       <article class="feature"><h2>RSG ready</h2><p>Launch the bundled speedrunning mod set with recommended StandardSettings presets and optional God sens.</p></article>
       <article class="feature"><h2>Practice included</h2><p>Use the official MCSR Practice Map in an isolated instance and replace its hotbar with your own MPK file.</p></article>
-      <article class="feature"><h2>Useful tools</h2><p>Install ToolScreen and optionally open NinjaBrainBot automatically alongside your Minecraft instance.</p></article>
+      <article class="feature"><h2>Jingle connected</h2><p>Launch Jingle alongside Minecraft so it can detect the game and keep resizing and borderless window controls available.</p></article>
+    </section>
+    <section class="privacy" id="privacy" aria-labelledby="privacy-title">
+      <div class="privacy-heading">
+        <div><div class="eyebrow">Privacy &amp; data compliance</div><h2 id="privacy-title">Clear about what the launcher touches.</h2><p class="privacy-intro">MCSR Launcher stores launcher data locally and only uses external services when a feature requires them.</p></div>
+        <a class="privacy-link" href="https://privacy.microsoft.com/privacystatement">Microsoft privacy statement</a>
+      </div>
+      <div class="privacy-grid">
+        <article class="privacy-item"><h3>Stored locally</h3><p>Your Minecraft profile name, UUID, access token, launcher settings, logs, worlds, and downloaded instance files are stored on your device.</p></article>
+        <article class="privacy-item"><h3>External services</h3><p>Microsoft handles sign-in. Minecraft, Fabric, GitHub, and mod providers handle downloads. Minotar receives the profile name for the avatar. PaceMan and Twitch are used only when connected.</p></article>
+        <article class="privacy-item"><h3>Your controls</h3><p>Use Add / Switch Account in the launcher to clear the saved session. You can inspect or remove instance files from their folders, or use offline mode without Microsoft sign-in.</p></article>
+      </div>
     </section>
     <footer class="footer"><span>MCSR Launcher</span><span>Minecraft 1.16.1</span></footer>
   </main>

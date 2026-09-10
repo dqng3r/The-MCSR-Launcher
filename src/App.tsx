@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { LogIn, AlertCircle, Terminal, UserCheck, Minus, X, LogOut, ShieldCheck, Copy, Check, UserPlus, Sun, Moon, SlidersHorizontal } from "lucide-react";
+import { LogIn, AlertCircle, Terminal, UserCheck, Minus, X, ShieldCheck, Copy, Check, UserPlus, Sun, Moon, SlidersHorizontal, Database, ExternalLink } from "lucide-react";
 import mcsrLogo from "./logo.svg";
 import mcsrLogoLight from "./logo-light.svg";
 const { ipcRenderer, clipboard, shell } = window.require("electron");
@@ -8,6 +8,7 @@ export default function App() {
   const [step, setStep] = useState("loading");
   const [theme, setTheme] = useState("dark");
   const [modsOpen, setModsOpen] = useState(false);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
   const [pacemanOpen, setPacemanOpen] = useState(false);
   const [pacemanToken, setPacemanToken] = useState("");
   const [hotbarSelected, setHotbarSelected] = useState(false);
@@ -16,6 +17,7 @@ export default function App() {
   const [recommendedSettings, setRecommendedSettings] = useState(false);
   const [godSensitivity, setGodSensitivity] = useState(false);
   const [autoOpenNinjabrainBot, setAutoOpenNinjabrainBot] = useState(false);
+  const [autoOpenJingle, setAutoOpenJingle] = useState(false);
   const [errorCopied, setErrorCopied] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
   const [offlineName, setOfflineName] = useState("Speedrunner");
@@ -29,6 +31,7 @@ export default function App() {
       setRecommendedSettings(settings?.recommendedSettings === true);
       setGodSensitivity(settings?.godSensitivity === true);
       setAutoOpenNinjabrainBot(settings?.autoOpenNinjabrainBot === true);
+      setAutoOpenJingle(settings?.autoOpenJingle === true);
       setMods(bundledMods);
       if (savedProfile && savedProfile.name) {
         setMcProfile(savedProfile);
@@ -50,7 +53,7 @@ export default function App() {
 
   const changeTheme = (nextTheme: string) => {
     setTheme(nextTheme);
-    ipcRenderer.invoke('save-settings', { theme: nextTheme, enabledMods, recommendedSettings, godSensitivity, autoOpenNinjabrainBot });
+    ipcRenderer.invoke('save-settings', { theme: nextTheme, enabledMods, recommendedSettings, godSensitivity, autoOpenNinjabrainBot, autoOpenJingle });
   };
 
   const toggleMod = (modId: string) => {
@@ -58,18 +61,23 @@ export default function App() {
       ? enabledMods.filter(id => id !== modId)
       : [...enabledMods, modId];
     setEnabledMods(nextMods);
-    ipcRenderer.invoke('save-settings', { theme, enabledMods: nextMods, recommendedSettings, godSensitivity, autoOpenNinjabrainBot });
+    ipcRenderer.invoke('save-settings', { theme, enabledMods: nextMods, recommendedSettings, godSensitivity, autoOpenNinjabrainBot, autoOpenJingle });
   };
 
   const saveOptionSettings = (nextRecommended: boolean, nextGodSensitivity: boolean) => {
     setRecommendedSettings(nextRecommended);
     setGodSensitivity(nextGodSensitivity);
-    ipcRenderer.invoke('save-settings', { theme, enabledMods, recommendedSettings: nextRecommended, godSensitivity: nextGodSensitivity, autoOpenNinjabrainBot });
+    ipcRenderer.invoke('save-settings', { theme, enabledMods, recommendedSettings: nextRecommended, godSensitivity: nextGodSensitivity, autoOpenNinjabrainBot, autoOpenJingle });
   };
 
   const toggleNinjabrainBot = (enabled: boolean) => {
     setAutoOpenNinjabrainBot(enabled);
-    ipcRenderer.invoke('save-settings', { theme, enabledMods, recommendedSettings, godSensitivity, autoOpenNinjabrainBot: enabled });
+    ipcRenderer.invoke('save-settings', { theme, enabledMods, recommendedSettings, godSensitivity, autoOpenNinjabrainBot: enabled, autoOpenJingle });
+  };
+
+  const toggleJingle = (enabled: boolean) => {
+    setAutoOpenJingle(enabled);
+    ipcRenderer.invoke('save-settings', { theme, enabledMods, recommendedSettings, godSensitivity, autoOpenNinjabrainBot, autoOpenJingle: enabled });
   };
 
   const saveProfileAndContinue = async (profileData: any) => {
@@ -144,6 +152,7 @@ export default function App() {
       recommendedSettings,
       godSensitivity,
       autoOpenNinjabrainBot,
+      autoOpenJingle,
       instance
     });
 
@@ -171,7 +180,7 @@ export default function App() {
         <div style={{ display: "flex", alignItems: "center", gap: "4px", WebkitAppRegion: "no-drag" } as any}>
           <button className="toolbar-button" onClick={() => setModsOpen(!modsOpen)} title="Manage built-in speedrunning mods"><SlidersHorizontal size={15} /> Mods</button>
           <button className="toolbar-button" onClick={() => setPacemanOpen(true)} title="Connect PaceMan tracker">PaceMan</button>
-          <button className="toolbar-button" onClick={() => shell.openExternal("https://github.com/jojoe77777/Toolscreen/releases/latest")} title="Download ToolScreen">ToolScreen download</button>
+          <button className="toolbar-icon" onClick={() => setPrivacyOpen(true)} title="Privacy and data compliance"><ShieldCheck size={15} /></button>
           <button className="toolbar-icon" onClick={() => changeTheme(theme === "dark" ? "light" : "dark")} title={theme === "dark" ? "Use light mode" : "Use dark mode"}>{theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}</button>
           <button onClick={() => ipcRenderer.send('window-minimize')} style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", padding: "6px", display: "flex" }}>
             <Minus size={16} />
@@ -192,7 +201,10 @@ export default function App() {
         </div>
       </div>}
 
-      <div className="tools-dock"><label className="bot-toggle"><input type="checkbox" checked={autoOpenNinjabrainBot} onChange={event => toggleNinjabrainBot(event.target.checked)} /><span><strong>NinjaBrainBot</strong><small>Open with RSG</small></span></label></div>
+      <div className="tools-dock">
+        <label className="bot-toggle"><input type="checkbox" checked={autoOpenNinjabrainBot} onChange={event => toggleNinjabrainBot(event.target.checked)} /><span><strong>NinjaBrainBot</strong><small>Open with RSG</small></span></label>
+        <label className="bot-toggle"><input type="checkbox" checked={autoOpenJingle} onChange={event => toggleJingle(event.target.checked)} /><span><strong>Jingle</strong><small>Open with Minecraft</small></span></label>
+      </div>
 
       {pacemanOpen && <div className="modal-backdrop" onClick={() => setPacemanOpen(false)}>
         <div className="paceman-dialog" onClick={event => event.stopPropagation()}>
@@ -202,6 +214,26 @@ export default function App() {
           <input className="paceman-input" value={pacemanToken} maxLength={6} onChange={event => setPacemanToken(event.target.value.replace(/[^a-zA-Z0-9]/g, ""))} placeholder="Six-character token" aria-label="Minecraft Auth Token" />
           <button className="primary-action" disabled={pacemanToken.length !== 6} onClick={connectPaceman}>Authorize PaceMan</button>
           <p className="dialog-footnote">Credentials stay on the official Microsoft, Aristois, Twitch, and PaceMan pages.</p>
+        </div>
+      </div>}
+
+      {privacyOpen && <div className="modal-backdrop" onClick={() => setPrivacyOpen(false)}>
+        <div className="privacy-dialog" onClick={event => event.stopPropagation()}>
+          <div className="mods-menu-header">
+            <div><strong>Privacy &amp; Data Compliance</strong><span>What MCSR Launcher stores and shares</span></div>
+            <button className="toolbar-icon" onClick={() => setPrivacyOpen(false)} title="Close privacy dialog"><X size={15} /></button>
+          </div>
+          <div className="privacy-status"><ShieldCheck size={17} /><span>Your launcher data stays on this device unless you choose an external service.</span></div>
+          <div className="privacy-sections">
+            <section><Database size={15} /><div><strong>Stored locally</strong><p>Your Minecraft profile name, UUID, access token, selected mods, display theme, and launcher options are saved in Electron&apos;s user-data folder. Game files, logs, worlds, and selected hotbar files are stored in the instance folders.</p></div></section>
+            <section><ExternalLink size={15} /><div><strong>Shared with third parties</strong><p>Microsoft handles sign-in. Minecraft, Fabric, GitHub, and mod providers handle game and mod downloads. Minotar receives the profile name to render the account avatar. PaceMan and Twitch receive data only when you connect them. Review those services&apos; privacy policies for their processing.</p></div></section>
+            <section><ShieldCheck size={15} /><div><strong>Your controls</strong><p>Use Add / Switch Account to remove the saved session from this launcher. Opening an instance folder lets you inspect or delete downloaded game data yourself. Offline mode avoids Microsoft sign-in.</p></div></section>
+          </div>
+          <div className="privacy-actions">
+            <button className="secondary-action" onClick={() => shell.openExternal("https://privacy.microsoft.com/privacystatement")}>Microsoft privacy statement</button>
+            <button className="primary-action" onClick={async () => { await logout(); setPrivacyOpen(false); }}>Clear saved account</button>
+          </div>
+          <p className="dialog-footnote">Last reviewed: September 2026. This in-app notice describes the current launcher behavior; it is not legal advice.</p>
         </div>
       </div>}
 

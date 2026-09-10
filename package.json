@@ -9,7 +9,8 @@
   "build": {
     "appId": "com.mcsr.client",
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "artifactName": "MCSR-Launcher-Setup.exe"
     },
     "directories": {
       "output": "release"

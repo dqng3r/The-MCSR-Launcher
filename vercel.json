@@ -3,6 +3,6 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "redirects": [
-    { "source": "/download", "destination": "https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPOSITORY/releases/latest/download/MCSR-Launcher-Setup.exe", "permanent": false }
+    { "source": "/download", "destination": "https://github.com/dqng3r/The-MCSR-Launcher/releases/latest/download/MCSR-Launcher-Setup.exe", "permanent": false }
   ]
 }

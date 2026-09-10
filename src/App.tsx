@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { LogIn, AlertCircle, Terminal, UserCheck, Minus, X, LogOut, ShieldCheck, Copy, Check, UserPlus, Sun, Moon, SlidersHorizontal } from "lucide-react";
+import mcsrLogo from "./logo.svg";
+import mcsrLogoLight from "./logo-light.svg";
 const { ipcRenderer, clipboard, shell } = window.require("electron");
 
 export default function App() {
@@ -8,8 +10,6 @@ export default function App() {
   const [modsOpen, setModsOpen] = useState(false);
   const [pacemanOpen, setPacemanOpen] = useState(false);
   const [pacemanToken, setPacemanToken] = useState("");
-  const [toolscreenInstalled, setToolscreenInstalled] = useState(false);
-  const [toolscreenInstalling, setToolscreenInstalling] = useState(false);
   const [hotbarSelected, setHotbarSelected] = useState(false);
   const [mods, setMods] = useState<any[]>([]);
   const [enabledMods, setEnabledMods] = useState<string[]>([]);
@@ -23,14 +23,13 @@ export default function App() {
   const [logs, setLogs] = useState<string[]>([]);
 
   useEffect(() => {
-    Promise.all([ipcRenderer.invoke('get-session'), ipcRenderer.invoke('get-settings'), ipcRenderer.invoke('get-mods'), ipcRenderer.invoke('get-toolscreen-status')]).then(([savedProfile, settings, bundledMods, toolscreen]: any[]) => {
+    Promise.all([ipcRenderer.invoke('get-session'), ipcRenderer.invoke('get-settings'), ipcRenderer.invoke('get-mods')]).then(([savedProfile, settings, bundledMods]: any[]) => {
       setTheme(settings?.theme === "light" ? "light" : "dark");
       setEnabledMods(settings?.enabledMods || bundledMods.map(mod => mod.mod_id));
       setRecommendedSettings(settings?.recommendedSettings === true);
       setGodSensitivity(settings?.godSensitivity === true);
       setAutoOpenNinjabrainBot(settings?.autoOpenNinjabrainBot === true);
       setMods(bundledMods);
-      setToolscreenInstalled(Boolean(toolscreen?.installed));
       if (savedProfile && savedProfile.name) {
         setMcProfile(savedProfile);
         setStep("ready");
@@ -66,17 +65,6 @@ export default function App() {
     setRecommendedSettings(nextRecommended);
     setGodSensitivity(nextGodSensitivity);
     ipcRenderer.invoke('save-settings', { theme, enabledMods, recommendedSettings: nextRecommended, godSensitivity: nextGodSensitivity, autoOpenNinjabrainBot });
-  };
-
-  const installToolscreen = async () => {
-    setToolscreenInstalling(true);
-    const result = await ipcRenderer.invoke('install-toolscreen');
-    setToolscreenInstalling(false);
-    if (result.success) setToolscreenInstalled(true);
-    else {
-      setStatusMsg(`ToolScreen install failed: ${result.error}`);
-      setStep("error");
-    }
   };
 
   const toggleNinjabrainBot = (enabled: boolean) => {
@@ -136,6 +124,14 @@ export default function App() {
     if (result.success) setHotbarSelected(true);
   };
 
+  const openInstanceFolder = async (instance: "rsg" | "practice") => {
+    const result = await ipcRenderer.invoke('open-instance-folder', instance);
+    if (!result.success) {
+      setStatusMsg(`Could not open instance folder: ${result.error}`);
+      setStep("error");
+    }
+  };
+
 
   const launchGame = async (instance: "rsg" | "practice") => {
     setStep("launching");
@@ -168,18 +164,14 @@ export default function App() {
 
   return (
     <div className={`app-shell theme-${theme}`} style={{ width: "100vw", height: "100vh", display: "flex", flexDirection: "column", backgroundColor: "#060811", color: "#f8fafc", overflow: "hidden" }}>
-      {/* Title bar with square 2x2 MCSR Logo */}
-      <div className="titlebar" style={{ height: "40px", backgroundColor: "#0b0f19", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px", WebkitAppRegion: "drag" } as any}>
+      <div className="titlebar" style={{ height: "60px", backgroundColor: "#0b0f19", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px", WebkitAppRegion: "drag" } as any}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div className="mcsr-mark" aria-label="MCSR">
-            <span className="mark-mc">MC</span>
-            <span className="mark-sr">SR</span>
-          </div>
-          <span style={{ fontSize: "0.85rem", fontWeight: "700", letterSpacing: "1px", color: "#94a3b8" }}>MCSR LAUNCHER</span>
+          <img className="mcsr-logo mcsr-logo-small" src={theme === "light" ? mcsrLogoLight : mcsrLogo} alt="MCSR Launcher" />
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "4px", WebkitAppRegion: "no-drag" } as any}>
           <button className="toolbar-button" onClick={() => setModsOpen(!modsOpen)} title="Manage built-in speedrunning mods"><SlidersHorizontal size={15} /> Mods</button>
           <button className="toolbar-button" onClick={() => setPacemanOpen(true)} title="Connect PaceMan tracker">PaceMan</button>
+          <button className="toolbar-button" onClick={() => shell.openExternal("https://github.com/jojoe77777/Toolscreen/releases/latest")} title="Download ToolScreen">ToolScreen download</button>
           <button className="toolbar-icon" onClick={() => changeTheme(theme === "dark" ? "light" : "dark")} title={theme === "dark" ? "Use light mode" : "Use dark mode"}>{theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}</button>
           <button onClick={() => ipcRenderer.send('window-minimize')} style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", padding: "6px", display: "flex" }}>
             <Minus size={16} />
@@ -200,10 +192,7 @@ export default function App() {
         </div>
       </div>}
 
-      <div className="tools-dock">
-        <div className="toolscreen-dock"><div><strong>ToolScreen</strong><span>Desktop overlay</span></div><button className="secondary-action toolscreen-button" onClick={installToolscreen} disabled={toolscreenInstalling}>{toolscreenInstalling ? "Installing..." : toolscreenInstalled ? "Installed" : "Install"}</button></div>
-        <label className="bot-toggle"><input type="checkbox" checked={autoOpenNinjabrainBot} onChange={event => toggleNinjabrainBot(event.target.checked)} /><span><strong>NinjaBrainBot</strong><small>Open with RSG</small></span></label>
-      </div>
+      <div className="tools-dock"><label className="bot-toggle"><input type="checkbox" checked={autoOpenNinjabrainBot} onChange={event => toggleNinjabrainBot(event.target.checked)} /><span><strong>NinjaBrainBot</strong><small>Open with RSG</small></span></label></div>
 
       {pacemanOpen && <div className="modal-backdrop" onClick={() => setPacemanOpen(false)}>
         <div className="paceman-dialog" onClick={event => event.stopPropagation()}>
@@ -221,10 +210,7 @@ export default function App() {
 
         {step === "login" && (
           <div className="surface auth-panel" style={{ background: "rgba(15, 23, 42, 0.6)", border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(12px)", padding: "2.5rem", borderRadius: "1rem", width: "360px", boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)", textAlign: "center" }}>
-            <div className="mcsr-mark mcsr-mark-large" aria-label="MCSR">
-              <span className="mark-mc">MC</span>
-              <span className="mark-sr">SR</span>
-            </div>
+            <img className="mcsr-logo mcsr-logo-large" src={theme === "light" ? mcsrLogoLight : mcsrLogo} alt="MCSR Launcher" />
             <h2 style={{ margin: "0 0 0.25rem 0", fontSize: "1.5rem", fontWeight: "700" }}>Welcome</h2>
             <p style={{ margin: "0 0 2rem 0", color: "#64748b", fontSize: "0.85rem" }}>Minecraft 1.16.1 Speedrunning Launcher</p>
 
@@ -280,6 +266,10 @@ export default function App() {
             <div className="practice-tools">
               <button className="secondary-action" onClick={openMpkEditor}>Open MPK Editor</button>
               <button className="secondary-action" onClick={selectPracticeHotbar}>{hotbarSelected ? "Hotbar selected" : "Select hotbar.nbt"}</button>
+            </div>
+            <div className="instance-folders">
+              <button className="secondary-action" onClick={() => openInstanceFolder("rsg")}>Open RSG folder</button>
+              <button className="secondary-action" onClick={() => openInstanceFolder("practice")}>Open Practice folder</button>
             </div>
           </div>
         )}

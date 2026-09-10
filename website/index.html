@@ -15,8 +15,7 @@
     .nav, .hero, .features, .footer { width: min(1080px, calc(100% - 40px)); margin: auto; }
     .nav { display: flex; align-items: center; justify-content: space-between; padding: 24px 0; }
     .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; font-weight: 800; letter-spacing: .12em; font-size: .82rem; }
-    .mark { display: flex; flex-direction: column; align-items: center; width: 31px; font-weight: 950; font-size: 11px; line-height: .75; letter-spacing: -.1em; }
-    .mc { color: #00bd68; } .sr { color: var(--brown); }
+    .brand-logo { width: 38px; height: 38px; object-fit: contain; }
     .nav-link { color: var(--muted); text-decoration: none; font-size: .9rem; }
     .nav-link:hover { color: var(--bright-green); }
     .hero { display: grid; grid-template-columns: 1.1fr .9fr; gap: 72px; align-items: center; min-height: 570px; padding: 72px 0 100px; }
@@ -32,7 +31,7 @@
     .version { margin-top: 14px; color: #718676; font-size: .78rem; }
     .preview { position: relative; min-height: 360px; padding: 34px; border: 1px solid var(--line); border-radius: 18px; background: linear-gradient(145deg, rgba(30, 56, 36, .82), var(--panel)); box-shadow: 0 30px 80px rgba(0,0,0,.3); }
     .preview:before { content: ""; position: absolute; inset: 16px; border: 1px solid rgba(142,230,162,.12); border-radius: 12px; pointer-events: none; }
-    .preview-mark { position: relative; display: flex; flex-direction: column; width: max-content; font-size: 5.5rem; font-weight: 950; line-height: .78; letter-spacing: -.11em; }
+    .preview-mark { position: relative; display: block; width: min(100%, 410px); height: 410px; object-fit: contain; }
     .preview-copy { position: absolute; right: 30px; bottom: 30px; color: var(--muted); font-size: .85rem; text-align: right; }
     .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding-bottom: 90px; }
     .feature { padding: 22px; border-top: 2px solid var(--green); background: rgba(22, 38, 27, .55); }
@@ -40,13 +39,13 @@
     .feature h2 { margin: 0 0 8px; font-size: 1rem; } .feature p { margin: 0; color: var(--muted); font-size: .9rem; }
     .footer { display: flex; justify-content: space-between; padding: 20px 0 28px; border-top: 1px solid var(--line); color: #718676; font-size: .78rem; }
     @media (max-width: 760px) { .hero { grid-template-columns: 1fr; gap: 42px; padding-top: 42px; } .preview { min-height: 250px; } .features { grid-template-columns: 1fr; } h1 { font-size: clamp(3rem, 16vw, 5rem); } }
-    @media (max-width: 480px) { .nav, .hero, .features, .footer { width: min(100% - 28px, 1080px); } .nav-link { display: none; } .preview-mark { font-size: 4.2rem; } .footer { display: block; } }
+    @media (max-width: 480px) { .nav, .hero, .features, .footer { width: min(100% - 28px, 1080px); } .nav-link { display: none; } .preview-mark { height: 260px; } .footer { display: block; } }
   </style>
 </head>
 <body>
   <main class="page">
     <nav class="nav" aria-label="Main navigation">
-      <a class="brand" href="/"><span class="mark"><span class="mc">MC</span><span class="sr">SR</span></span><span>MCSR LAUNCHER</span></a>
+      <a class="brand" href="/"><img class="brand-logo" src="logo.svg" alt="MCSR Launcher"><span>MCSR LAUNCHER</span></a>
       <a class="nav-link" href="#features">What is included</a>
     </nav>
     <section class="hero">
@@ -61,7 +60,7 @@
         <div class="version">Windows installer | Minecraft 1.16.1 | Free and open source</div>
       </div>
       <div class="preview" aria-label="MCSR Launcher preview">
-        <div class="preview-mark"><span class="mc">MC</span><span class="sr">SR</span></div>
+        <img class="preview-mark" src="logo.svg" alt="MCSR Launcher logo">
         <div class="preview-copy">RSG<br>Practice<br>1.16.1</div>
       </div>
     </section>

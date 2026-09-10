@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 768 768" role="img" aria-labelledby="title desc">
+  <title id="title">MCSR Launcher</title>
+  <desc id="desc">A grass block above the MCSR Launcher wordmark</desc>
+  <g transform="translate(184 34)">
+    <path d="M200 0 348 78 200 156 52 78Z" fill="#66c846"/>
+    <path d="M52 78v148l148 78V156Z" fill="#704125"/>
+    <path d="M348 78v148l-148 78V156Z" fill="#55301e"/>
+    <path d="M52 78 200 156l148-78v32l-148 78L52 110Z" fill="#4fbd38"/>
+    <path d="M52 110v31l24 13V123Zm38 20v32l24 13v-32Zm38 20v32l24 13v-32Zm38 20v32l24 13v-32Z" fill="#4c2c1c"/>
+    <path d="M348 110v31l-24 13V123Zm-38 20v32l-24 13v-32Zm-38 20v32l-24 13v-32Zm-38 20v32l-24 13v-32Z" fill="#3d2419"/>
+  </g>
+  <g text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900">
+    <text x="384" y="500" fill="#fff" font-size="142" letter-spacing="-12">MCSR</text>
+    <text x="384" y="584" fill="#fff" font-size="58" letter-spacing="13">LAUNCHER</text>
+  </g>
+  <path d="M151 612h113M504 612h113" stroke="#25d85d" stroke-width="8" stroke-linecap="round"/>
+</svg>

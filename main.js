@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
@@ -9,14 +9,15 @@ const { Auth } = require('msmc');
 const speedrunningMods = require('./speedrunning-mods.json');
 
 let mainWindow;
+const launcherIconPath = path.join(__dirname, 'src', 'logo.ico');
+if (process.platform === 'win32') app.setAppUserModelId('com.mcsr.client');
 const sessionPath = path.join(app.getPath('userData'), 'session.json');
 const settingsPath = path.join(app.getPath('userData'), 'settings.json');
-const toolscreenPath = path.join(app.getPath('userData'), 'toolscreen', 'Toolscreen-1.4.7-double-click-me.exe');
-const toolscreenUrl = 'https://github.com/jojoe77777/Toolscreen/releases/download/v1.4.7/Toolscreen-1.4.7-double-click-me.exe';
 const ninjabrainBotPath = path.join(app.getPath('userData'), 'ninjabrainbot', 'Ninjabrain-Bot-1.5.2.jar');
 const ninjabrainBotUrl = 'https://github.com/Ninjabrain1/Ninjabrain-Bot/releases/download/1.5.2/Ninjabrain-Bot-1.5.2.jar';
 const minecraftVersion = '1.16.1';
 const practiceRootName = '.mcsr-practice';
+const rsgRootName = '.mcsr';
 const practiceMapUrl = 'https://github.com/Dibedy/The-MCSR-Practice-Map/releases/download/latest/MCSR.Practice.v2.0.0.zip';
 const fabricLoaderVersion = '0.16.0';
 const fabricVersionId = `fabric-loader-${fabricLoaderVersion}-${minecraftVersion}`;
@@ -35,6 +36,7 @@ const recommendedOptions = {
   soundCategory_music: '0.0',
   showSubtitles: 'true',
   enableVsync: 'false',
+  fullscreen: 'true',
   graphicsMode: '1',
   guiScale: '4',
   autoJump: 'false',
@@ -69,6 +71,7 @@ function writeRecommendedOptions(rootPath, godSensitivity) {
     renderDistance: 8.0,
     gamma: 5.0,
     enableVsync: false,
+    fullscreen: true,
     bobView: false,
     guiScale: 4,
     renderClouds: 0,
@@ -84,11 +87,21 @@ function writeRecommendedOptions(rootPath, godSensitivity) {
     chunkborders: { enabled: true, value: true },
     pieDirectory: { enabled: true, value: 'root.gameRenderer.level.entities.block_entities' }
   });
+  const extraOptionsPath = path.join(rootPath, 'config', 'mcsr', 'extra-options.json');
+  const extraOptions = fs.existsSync(extraOptionsPath)
+    ? JSON.parse(fs.readFileSync(extraOptionsPath, 'utf8'))
+    : {};
+  Object.assign(extraOptions, {
+    distortionEffectScale: 0.0,
+    fovEffectScale: 0.0
+  });
+  fs.writeFileSync(extraOptionsPath, JSON.stringify(extraOptions, null, 2));
   fs.writeFileSync(standardSettingsPath, JSON.stringify(standardSettings, null, 2));
 }
 
 function downloadFile(url, destination) {
   return new Promise((resolve, reject) => {
+    fs.mkdirSync(path.dirname(destination), { recursive: true });
     const request = https.get(url, response => {
       if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
         response.resume();
@@ -102,6 +115,7 @@ function downloadFile(url, destination) {
       }
 
       const temporaryPath = `${destination}.download`;
+      if (fs.existsSync(temporaryPath)) fs.unlinkSync(temporaryPath);
       const file = fs.createWriteStream(temporaryPath);
       response.pipe(file);
       file.on('finish', () => file.close(() => {
@@ -120,6 +134,7 @@ function downloadFile(url, destination) {
 
 async function ensureFile(url, destination) {
   if (fs.existsSync(destination) && fs.statSync(destination).size > 0) return;
+  fs.mkdirSync(path.dirname(destination), { recursive: true });
   await downloadFile(url, destination);
 }
 
@@ -140,19 +155,7 @@ ipcMain.handle('get-settings', async () => {
 
 ipcMain.handle('get-mods', async () => speedrunningMods.map(({ name, mod_id }) => ({ name, mod_id })));
 
-ipcMain.handle('get-toolscreen-status', async () => ({ installed: fs.existsSync(toolscreenPath) && fs.statSync(toolscreenPath).size > 0 }));
 ipcMain.handle('get-ninjabrainbot-status', async () => ({ installed: fs.existsSync(ninjabrainBotPath) && fs.statSync(ninjabrainBotPath).size > 0 }));
-
-ipcMain.handle('install-toolscreen', async () => {
-  try {
-    fs.mkdirSync(path.dirname(toolscreenPath), { recursive: true });
-    await ensureFile(toolscreenUrl, toolscreenPath);
-    return { success: true, path: toolscreenPath };
-  } catch (error) {
-    console.error('Failed to install Toolscreen', error);
-    return { success: false, error: error.stack || String(error) };
-  }
-});
 
 ipcMain.handle('install-ninjabrainbot', async () => {
   try {
@@ -248,13 +251,52 @@ async function installSpeedrunningPack(rootPath, sendLog, enabledModIds) {
 }
 
 async function installPracticeMap(practiceRoot, sendLog) {
+  const worldsPath = path.join(practiceRoot, 'saves');
+  const worldDestination = path.join(worldsPath, 'MCSR Practice');
   const markerPath = path.join(practiceRoot, '.mcsr-practice-map-installed');
-  if (fs.existsSync(markerPath)) return;
+  if (fs.existsSync(path.join(worldDestination, 'level.dat'))) return;
+
+  const findWorld = directory => {
+    if (!fs.existsSync(directory)) return null;
+    if (fs.existsSync(path.join(directory, 'level.dat'))) return directory;
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      if (entry.isDirectory() && entry.name !== 'saves') {
+        const world = findWorld(path.join(directory, entry.name));
+        if (world) return world;
+      }
+    }
+    return null;
+  };
+
+  const rootContainsWorld = fs.existsSync(path.join(practiceRoot, 'level.dat'));
+  let worldSource = rootContainsWorld ? practiceRoot : findWorld(practiceRoot);
   const archivePath = path.join(practiceRoot, 'MCSR.Practice.v2.0.0.zip');
-  sendLog('Downloading the official MCSR Practice Map...');
-  await ensureFile(practiceMapUrl, archivePath);
-  await extractZip(archivePath, { dir: practiceRoot });
-  fs.unlinkSync(archivePath);
+  if (!worldSource) {
+    if (!fs.existsSync(archivePath)) {
+      sendLog('Downloading the official MCSR Practice Map...');
+      await ensureFile(practiceMapUrl, archivePath);
+    }
+    await extractZip(archivePath, { dir: practiceRoot });
+    fs.unlinkSync(archivePath);
+    worldSource = findWorld(practiceRoot);
+  }
+
+  if (!worldSource) throw new Error('The Practice Map archive did not contain a Minecraft world (level.dat).');
+  fs.mkdirSync(worldsPath, { recursive: true });
+  if (path.resolve(worldSource) === path.resolve(practiceRoot)) {
+    const worldEntries = [
+      'level.dat', 'level.dat_old', 'session.lock', 'icon.png', 'region', 'entities', 'poi',
+      'data', 'playerdata', 'advancements', 'stats', 'DIM-1', 'DIM1'
+    ];
+    fs.mkdirSync(worldDestination, { recursive: true });
+    for (const entry of worldEntries) {
+      const sourcePath = path.join(practiceRoot, entry);
+      if (fs.existsSync(sourcePath)) fs.renameSync(sourcePath, path.join(worldDestination, entry));
+    }
+  } else if (path.resolve(worldSource) !== path.resolve(worldDestination)) {
+    if (fs.existsSync(worldDestination)) fs.rmSync(worldDestination, { recursive: true, force: true });
+    fs.renameSync(worldSource, worldDestination);
+  }
   fs.writeFileSync(markerPath, 'MCSR Practice Map v2.0.0');
 }
 
@@ -262,6 +304,7 @@ app.whenReady().then(() => {
   mainWindow = new BrowserWindow({
     width: 950,
     height: 600,
+    icon: launcherIconPath,
     resizable: false,
     frame: false,
     show: false,
@@ -278,6 +321,18 @@ app.whenReady().then(() => {
 
 ipcMain.on('window-minimize', () => mainWindow?.minimize());
 ipcMain.on('window-close', () => mainWindow?.close());
+
+ipcMain.handle('open-instance-folder', async (event, instance) => {
+  const instanceName = instance === 'practice' ? practiceRootName : rsgRootName;
+  const instancePath = path.join(app.getPath('userData'), instanceName);
+  try {
+    fs.mkdirSync(instancePath, { recursive: true });
+    const error = await shell.openPath(instancePath);
+    return error ? { success: false, error } : { success: true, path: instancePath };
+  } catch (error) {
+    return { success: false, error: error.stack || String(error) };
+  }
+});
 
 ipcMain.handle('get-session', async () => {
   try {
@@ -406,6 +461,7 @@ ipcMain.handle('launch-mc', async (event, options) => {
     const minecraftProcess = await launcher.launch(opts);
     if (!minecraftProcess) throw new Error('Minecraft failed to start. Check the live game logs for details.');
     if (options?.autoOpenNinjabrainBot) {
+      fs.mkdirSync(path.dirname(ninjabrainBotPath), { recursive: true });
       await ensureFile(ninjabrainBotUrl, ninjabrainBotPath);
       sendLog('Opening Ninjabrain Bot...');
       const botProcess = spawn('java', ['-jar', ninjabrainBotPath], { detached: true, stdio: 'ignore' });
